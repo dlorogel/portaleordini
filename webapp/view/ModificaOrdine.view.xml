@@ -1,0 +1,161 @@
+<mvc:View controllerName="it.orogel.portaleordini.controller.ModificaOrdine"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:t="sap.ui.table"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    xmlns:fb="sap.ui.comp.filterbar">
+    <Page id="page" title="{i18n>title3}" showNavButton="true" navButtonPress=".onNavBack">
+        <content>
+            <Panel width="auto" class="sapUiResponsiveMargin" accessibleRole="Region">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <Title text="Testata"/>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <content>
+                    <FlexBox alignItems="Center">
+                        <items>
+                            <Label id="_IDGenToolbarSpacer1" text="Numero Ordine" labelFor="NumeroOrdine">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData id="_IDGenOverflowToolbarLayoutData1" group="1" />
+                                </layoutData>
+                            </Label>
+                            <ToolbarSpacer id="_IDGenToolbarSpacer6" width="60px"/>
+                            <Input id="NumeroOrdine" value="{Ordine/Kunnr}" editable="false"/>
+                            <ToolbarSpacer id="_IDGenToolbarSpacer5" width="200px"/>
+                            <Label id="_IDGenToolbarSpacer2" text="Stato di Elaborazione" labelFor="StatoElaborazione">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData id="_IDGenOverflowToolbarLayoutData2" group="1" />
+                                </layoutData>
+                            </Label>
+                            <ToolbarSpacer id="_IDGenToolbarSpacer7" width="20px"/>
+                            <ComboBox id="StatoElaborazione"
+                                xmlns="sap.m">
+                                <items>
+                                    <core:Item xmlns:core="sap.ui.core" key="Draft" text="Draft" id="item8"/>
+                                    <core:Item xmlns:core="sap.ui.core" key="Completato" text="Completato" id="item9"/>
+                                </items>
+                            </ComboBox>
+                        </items>
+                    </FlexBox>
+                    <FlexBox alignItems="Center">
+                        <items>
+                            <Label text="Area Vendite" labelFor="AreaVendite">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData group="1" />
+                                </layoutData>
+                            </Label>
+                            <ToolbarSpacer width="75px"/>
+                            <Input id="AreaVendite" value="{Ordine/AreaVendite}" editable="false"/>
+                            <ToolbarSpacer width="203px"/>
+                            <Label text="Data Consegna" labelFor="DataConsegna">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData group="1" />
+                                </layoutData>
+                            </Label>
+                            <ToolbarSpacer width="55px"/>
+                            <DatePicker id="DataConsegna" value="{Ordine/DataConsegna}" change="onDataChange"/>
+                        </items>
+                    </FlexBox>
+                    <FlexBox alignItems="Center">
+                        <items>
+                            <Label text="Destinazione Merci" labelFor="DestinazioneMerci">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData group="1" />
+                                </layoutData>
+                            </Label>
+                            <ToolbarSpacer width="37px"/>
+                            <ComboBox xmlns="sap.m" id="DestinazioneMerci" items="{appModel>/DestinazioneMerci}" width="1000px" selectionChange="onChangeDestinatarioMerci">
+                                <items>
+                                    <core:Item xmlns:core="sap.ui.core" key="{appModel>CODICEDESTINATARIO}" text="{appModel>INDIRIZZO}"/>
+                                </items>
+                            </ComboBox>
+                        </items>
+                    </FlexBox>
+                    <FlexBox alignItems="Center">
+                        <items>
+                            <Label text="Note" labelFor="Note">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData group="1" />
+                                </layoutData>
+                            </Label>
+                            <ToolbarSpacer width="125px"/>
+                            <TextArea id="Note" value="{Ordine/Note}" editable="true" width="1000px"/>
+                        </items>
+                    </FlexBox>
+                </content>
+            </Panel>
+            <Panel width="auto" class="sapUiResponsiveMargin" accessibleRole="Region">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <Title text="Articoli"/>
+                        <ToolbarSpacer width="870px"/>
+                        <Button text="Aggiungi Articolo" press="onAggiungiArticolo" type="Transparent"/>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <content>
+                    <t:Table id="TableItems" rows="{appModel>/Items}" selectionMode="None" visibleRowCountMode="Auto" ariaLabelledBy="title" enableCellFilter="true" firstVisibleRowChanged="onScroll">
+                        <t:columns>
+                            <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="CODARTICOLO" sortProperty="CODARTICOLO" width="350px">
+                                <Label text="{i18n>lbl.Articolo}"/>
+                                <t:template>
+                                    <Text text="{CODARTICOLO}  {DESCRARTICOLO}"/>
+                                </t:template>
+                            </t:Column>
+                            <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="NCARTONIS" sortProperty="NCARTONIS">
+                                <Label text="{i18n>lbl.NCartoniPerStrato}"/>
+                                <t:template>
+                                    <Text text="{NCARTONIS}"/>
+                                </t:template>
+                            </t:Column>
+                            <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="NSTRATI" sortProperty="NSTRATI">
+                                <Label text="{i18n>lbl.NStratiPerPallet}"/>
+                                <t:template>
+                                    <Text text="{NSTRATI}"/>
+                                </t:template>
+                            </t:Column>
+                            <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="NCARTONIP" sortProperty="NCARTONIP">
+                                <Label text="{i18n>lbl.NCartoniPerPallet}"/>
+                                <t:template>
+                                    <Text text="{NCARTONIP}"/>
+                                </t:template>
+                            </t:Column>
+                            <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="UDM" sortProperty="UDM">
+                                <Label text="{i18n>lbl.UnitadiMisura}"/>
+                                <t:template>
+                                    <ComboBox xmlns="sap.m" id="UDM" value="{UDM}" width="1000px">
+                                        <items>
+                                            <core:Item xmlns:core="sap.ui.core" key="CT" text="Cartoni"/>
+                                            <core:Item xmlns:core="sap.ui.core" key="STR" text="Strati"/>
+                                            <core:Item xmlns:core="sap.ui.core" key="PAL" text="Pallet"/>
+                                        </items>
+                                    </ComboBox>
+                                </t:template>
+                            </t:Column>
+                            <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="QUANTITA" sortProperty="QUANTITA">
+                                <Label text="{i18n>lbl.Quantita}"/>
+                                <t:template>
+                                    <Input value="{QUANTITA}" type="Number"/>
+                                </t:template>
+                            </t:Column>
+                            <t:Column hAlign="Begin" resizable="true" autoResizable="true">
+                                <Label text="{i18n>lbl.Elimina}"/>
+                                <t:template>
+                                    <Button type="Emphasized" icon="sap-icon://delete" press="onElimina"/>
+                                </t:template>
+                            </t:Column>
+                        </t:columns>
+                    </t:Table>
+                    <Button id="ButtonSalvaModificaOrdine" text="Salva Ordine" press="onSalvaModificaOrdine">
+                        <layoutData>
+                            <OverflowToolbarLayoutData id="_IDGenOverflowToolbarLayoutData3" shrinkable="true"
+                                                    minWidth = "50px"/>
+                        </layoutData>
+                    </Button>
+                </content>
+            </Panel>
+        </content>
+    </Page>
+</mvc:View>
+

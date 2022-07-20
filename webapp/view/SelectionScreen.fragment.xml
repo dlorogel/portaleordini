@@ -1,0 +1,17 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true">
+    <Dialog title="{i18n>lbl.SelectionScreen}" afterClose="onAfterCloseSelectionScreenDialog">
+        <IconTabBar id="idTabBar" class="sapUiResponsiveContentPadding" select="onTabSelect">
+            <items>
+                <IconTabFilter text="Articoli" key="Articoli">
+                    <core:Fragment fragmentName="it.orogel.portaleordini.view.AggiungiArticoli" type="XML" />
+                </IconTabFilter>
+                <IconTabFilter text="Catalogo" key="Catalogo">
+                    <core:Fragment fragmentName="it.orogel.portaleordini.view.AggiungiCatalogo" type="XML" />
+                </IconTabFilter>
+            </items>
+        </IconTabBar>
+    </Dialog>
+</core:FragmentDefinition>

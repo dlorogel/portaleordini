@@ -1,0 +1,140 @@
+<mvc:View controllerName="it.orogel.portaleordini.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:t="sap.ui.table"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    xmlns:fb="sap.ui.comp.filterbar">
+    <Shell id="shell">
+        <App id="app">
+            <pages>
+                <Page id="page" title="{i18n>title}">
+                    <content>
+                        <OverflowToolbar id="ButtonBar">
+                            <ToolbarSpacer id="_IDGenToolbarSpacer1" width="20px"/>
+                            <Button id="ButtonCreazioneOrdine" text="Creazione Ordine" press="onCreaOrdine">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData id="_IDGenOverflowToolbarLayoutData1" shrinkable="true"
+                                                    minWidth = "50px"/>
+                                </layoutData>
+                            </Button>
+                            <ToolbarSpacer id="_IDGenToolbarSpacer2" width="20px"/>
+                            <Button id="ButtonRicercaOrdini" text="Ricerca Ordine" press="onRicercaOrdini">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData id="_IDGenOverflowToolbarLayoutData20" shrinkable="true"
+                                                    minWidth = "50px"/>
+                                </layoutData>
+                            </Button>
+                            <ToolbarSpacer id="_IDGenToolbarSpacer3" width="600px"/>
+                            <ComboBox xmlns="sap.m" id="boxCustomer" items="{appModel>/Customer}" placeholder="Ragione Sociale Cliente">
+                                <items>
+                                    <core:Item xmlns:core="sap.ui.core" key="{appModel>Kunnr}" text="{appModel>Name1}"/>
+                                </items>
+                            </ComboBox>
+                        </OverflowToolbar>
+                        <fb:FilterBar id="_IDGenFilterBar1" clear="onReset" search="onRicercaOrdini" showRestoreButton="false" showClearButton="false" showClearOnFB="true" deltaVariantMode="false">
+                            <fb:filterGroupItems>
+                                <fb:FilterGroupItem id="StatoOrdineFilter" groupName="__$INTERNAL$" name="StatoOrdineFilter" label="{i18n>lbl.StatoOrdine}" partOfCurrentVariant="true" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <ComboBox id="StatoOrdineInput"
+                                            xmlns="sap.m">
+                                            <items>
+                                                <core:Item xmlns:core="sap.ui.core" key="Da Consegnare" text="Da Consegnare" id="item0"/>
+                                                <core:Item xmlns:core="sap.ui.core" key="Consegnato" text="Consegnato" id="item1"/>
+                                                <core:Item xmlns:core="sap.ui.core" key="Fatturato" text="Fatturato" id="item2"/>
+                                            </items>
+                                        </ComboBox>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                                <fb:FilterGroupItem id="NumeroOrdineFilter" groupName="__$INTERNAL$" name="NumeroOrdineFilter" label="{i18n>lbl.NumeroOrdine}" partOfCurrentVariant="true" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <Input id="NumeroOrdineInput" class="customHeightInput" required="false" showValueHelp="false"></Input>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                                <fb:FilterGroupItem id="DataDaFilter" groupName="__$INTERNAL$" name="DataDaFilter" label="{i18n>lbl.DataDa}" partOfCurrentVariant="true" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <DatePicker id="DataDaInput" placeholder="" change="DataDaChange" class="sapUiSmallMarginBottom" valueFormat="dd-MM-yyyy" showFooter="true"/>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                                <fb:FilterGroupItem id="DataAFilter" groupName="__$INTERNAL$" name="DataAFilter" label="{i18n>lbl.DataA}" partOfCurrentVariant="true" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <DatePicker id="DataAInput" placeholder="" change="DataAChange" class="sapUiSmallMarginBottom" valueFormat="dd-MM-yyyy" showFooter="true"/>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                                <fb:FilterGroupItem id="AreaVenditeFilter" groupName="__$INTERNAL$" name="AreaVenditeFilter" label="{i18n>lbl.AreaVendite}" partOfCurrentVariant="true" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <ComboBox id="AreaVenditeInput"
+                                            xmlns="sap.m">
+                                            <items>
+                                                <core:Item xmlns:core="sap.ui.core" key="Surgelato" text="Surgelato" id="item5"/>
+                                                <core:Item xmlns:core="sap.ui.core" key="Confetture" text="Confetture" id="item6"/>
+                                            </items>
+                                        </ComboBox>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                                <fb:FilterGroupItem id="StatoElaborazioneFilter" groupName="__$INTERNAL$" name="StatoElaborazioneFilter" label="{i18n>lbl.StatoElaborazione}" partOfCurrentVariant="true" visibleInFilterBar="true">
+                                    <fb:control>
+                                        <ComboBox id="StatoElaborazioneInput"
+                                            xmlns="sap.m">
+                                            <items>
+                                                <core:Item xmlns:core="sap.ui.core" key="Draft" text="Draft" id="item8"/>
+                                                <core:Item xmlns:core="sap.ui.core" key="Completato" text="Completato" id="item9"/>
+                                                <core:Item xmlns:core="sap.ui.core" key="" text="Blank" id="item10"/>
+                                            </items>
+                                        </ComboBox>
+                                    </fb:control>
+                                </fb:FilterGroupItem>
+                            </fb:filterGroupItems>
+                        </fb:FilterBar>
+                        <t:Table id="OrdiniTable" rows="{appModel>/testataordini}" selectionMode="None" visibleRowCountMode="Auto" ariaLabelledBy="title" enableCellFilter="true">
+                            <t:columns>
+                                <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="Vbeln" sortProperty="Vbeln">
+                                    <Label text="{i18n>lbl.Vbeln}"/>
+                                    <t:template>
+                                        <Link text="{Vbeln}" press="onVisualizzaOrdine" />
+                                    </t:template>
+                                </t:Column>
+                                <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="StatoOrdine" sortProperty="StatoOrdine">
+                                    <Label text="{i18n>lbl.StatoOrdine}"/>
+                                    <t:template>
+                                        <Text text="{StatoOrdine}"/>
+                                    </t:template>
+                                </t:Column>
+                                <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="Edatu" sortProperty="Edatu">
+                                    <Label text="{i18n>lbl.Edatu}"/>
+                                    <t:template>
+                                        <Text  text ="{ path:'Edatu', type:'sap.ui.model.type.Date', formatOptions: { pattern : 'dd-MM-yyyy' } }" />
+                                    </t:template>
+                                </t:Column>
+                                <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="AreaVendite" sortProperty="AreaVendite">
+                                    <Label text="{i18n>lbl.AreaVendite}"/>
+                                    <t:template>
+                                        <Text text="{AreaVendite}" />
+                                    </t:template>
+                                </t:Column>
+                                <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="Note" sortProperty="Note">
+                                    <Label text="{i18n>lbl.Note}"/>
+                                    <t:template>
+                                        <Text text="{Note}"/>
+                                    </t:template>
+                                </t:Column>
+                                <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="StatoElaborazione" sortProperty="StatoElaborazione">
+                                    <Label text="{i18n>lbl.StatoElaborazione}"/>
+                                    <t:template>
+                                        <Text text="{StatoElaborazione}" />
+                                    </t:template>
+                                </t:Column>
+                                <t:Column hAlign="Begin" resizable="true" autoResizable="true">
+                                    <Label text="{i18n>lbl.Modifica}"/>
+                                    <t:template>
+                                        <Button text="Modifica" type="Emphasized" icon="sap-icon://detail-view" press="onNavToModifica" enabled="{Modifica}"/>
+                                    </t:template>
+                                </t:Column>
+                            </t:columns>
+                        </t:Table>
+                    </content>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>

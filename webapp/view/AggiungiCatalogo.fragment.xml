@@ -1,0 +1,17 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:t="sap.ui.table"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns:l="sap.ui.layout"
+    xmlns:fb="sap.ui.comp.filterbar">
+    <t:Table id="TableCatalogo" rows="{appModel>/Catalogo}" selectionMode="None" enableCellFilter="false">
+        <t:columns>
+            <t:Column hAlign="Begin" resizable="false" autoResizable="true" sorted="false">
+                <Link text="Catalogo" press="onAggiungiCatalogo"/>
+                <t:template>
+                    <Text text="{CODARTICOLO}  {DESCRARTICOLO}"/>
+                </t:template>
+            </t:Column>
+        </t:columns>
+    </t:Table>
+</core:FragmentDefinition>
