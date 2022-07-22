@@ -26,7 +26,6 @@ sap.ui.define([
                     this.getView().getModel().read("/UserCustomer", {
                         filters: [aUserFilter],
                         success: (aData) => {
-                            debugger;
                             resolve(aData.results);
                         },
                         error: (oError) => {

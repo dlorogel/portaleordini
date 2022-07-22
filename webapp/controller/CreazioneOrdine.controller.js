@@ -401,6 +401,10 @@ sap.ui.define([
                 }
                 var language = navigator.language.substring(0, 2).toUpperCase();
                 this.Note = Note;
+                if (this.Note === "" || this.Note === undefined) {
+                    this.Note = "-";
+                    Note = "-";
+                }
                 //Order.push(resultsText);
                 var Text = {
                     "Language": language,
