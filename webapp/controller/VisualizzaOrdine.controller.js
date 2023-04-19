@@ -45,6 +45,15 @@ sap.ui.define([
                     if (aResults.length > 0) {
                         this.getView().byId("DestinazioneMerci").setValue(aResults[0].DESTINATARIO);
                         this.getView().byId("DataConsegna").setValue(aResults[0].VDATU.toLocaleDateString('it'));
+                        aResults.forEach(y => {
+                            if (y.UDM === "CT") {
+                                y.UDM = "Cartoni";
+                            } else if (y.UDM === "STR") {
+                                y.UDM = "Strati";
+                            } else if (y.UDM === "PAL") {
+                                y.UDM = "Pallet";
+                            }
+                        });
                         this._setTableModel(aResults);
                         this.Articoli = aResults;
                     }

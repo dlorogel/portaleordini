@@ -19,4 +19,4 @@ builder:
         app:
           name: ZPORTALEORDINI
           package: Z001
-          transport: SODK900380
+          transport: SODK903634

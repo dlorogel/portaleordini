@@ -97,7 +97,7 @@ sap.ui.define([
                         this.getView().byId("DestinazioneMerci").setValue(aResults[0][0].DESTINATARIO);
                         this.keydestinatario = aResults[1].find(x => x.INDIRIZZO === this.getView().byId("DestinazioneMerci").getValue()).CODICEDESTINATARIO;
                         this.getView().byId("DataConsegna").setValue(aResults[0][0].VDATU.toLocaleDateString('it'));
-                        aResults.forEach(y => {
+                        aResults[0].forEach(y => {
                             if (y.UDM === "CT") {
                                 y.UDM = "Cartoni";
                             } else if (y.UDM === "STR") {
@@ -109,7 +109,12 @@ sap.ui.define([
                         const oAppModel = this.getView().getModel("appModel");
                         oAppModel.setProperty("/DestinazioneMerci", aResults[1]);
                         this.ArticoliOrdine = aResults[0];
+                        this.VKORG = this.ArticoliOrdine[0].VKORG;
+                        this.VTWEG = this.ArticoliOrdine[0].VTWEG;
                         this.Articoli = aResults[2];
+                        this.Articoli.forEach(x => {
+                            x.FILTER = x.CODARTICOLO + " " + x.DESCRARTICOLO;
+                        });
                         this.Catalogo = aResults[3];
                         this.CBO = [];
                         this.ArticoliAggiunti = [];
@@ -190,129 +195,57 @@ sap.ui.define([
             },
             onSalvaModificaOrdine: function (oEvent) {
                 this.oComponent.busy(true);
-                for (var i = 0; i < this.ArticoliOrdine.concat(this.ArticoliAggiunti).length; i++) {
-                    if (this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM === "Cartoni") {
-                        this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM = "CT";
-                    } else if (this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM === "Strati") {
-                        this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM = "STR";
-                    } else if (this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM === "Pallet") {
-                        this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM = "PAL";
-                    }
-                }
-                if (this.CBO.length > 0) {
-                    this.VBELN = this.CBO[0].VBELN;
-                    this.AUART = this.CBO[0].AUART;
-                    var Order = {
-                        "SalesOrder": this.VBELN
-                    };
-                    if (this.StatoElaborazione !== this.getView().byId("StatoElaborazione").getValue() && this.getView().byId("StatoElaborazione").getValue() !== "") {
-                        var DeliveryBlockReason = this.getView().byId("StatoElaborazione").getValue();
-                        if (DeliveryBlockReason === "Draft") {
-                            DeliveryBlockReason = "Z1";
-                        } else if (DeliveryBlockReason === "Completato") {
-                            DeliveryBlockReason = "Z2";
+                this.ControlloOrdine();
+                if (this.Controlli === "") {
+                    for (var i = 0; i < this.ArticoliOrdine.concat(this.ArticoliAggiunti).length; i++) {
+                        if (this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM === "Cartoni") {
+                            this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM = "CT";
+                        } else if (this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM === "Strati") {
+                            this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM = "STR";
+                        } else if (this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM === "Pallet") {
+                            this.ArticoliOrdine.concat(this.ArticoliAggiunti)[i].UDM = "PAL";
                         }
-                        this.DeliveryBlockReason = DeliveryBlockReason;
-                        Order.DeliveryBlockReason = DeliveryBlockReason;
                     }
-                    if (this.getView().byId("Note").getValue() !== this.Testata.Note) {
-                        var Note = this.getView().byId("Note").getValue();
-                    }
-                    var dateParts = this.getView().byId("DataConsegna").getValue().split("/");
-                    var datecontrol = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
-                    let timezone = datecontrol.getTimezoneOffset() / 60;
-                    datecontrol.setHours(datecontrol.getHours() - timezone);
-                    if (datecontrol.toISOString() !== this.CBO[0].VDATU) {
-                        var date = datecontrol.getTime();
-                        date = "/Date(" + date + ")/";
-                        Order.RequestedDeliveryDate = date;
-                        //cambiare data nel sales order, negli item
-                    }
-                    if (this.keydestinatariochange !== undefined) {
-                        var changedestinatario = this.keydestinatariochange;
-                    }
-                    const oPromiseOrdine = new Promise((resolve, reject) => {
-                        $.ajax({
-                            cache: false,
-                            crossDomain: true,
-                            type: "GET",
-                            contentType: "application/json; charset=ytf-8",
-                            //dataType: "json",
-                            url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrder('" + this.VBELN.padStart(10, "0") + "')?$expand=to_Text&$format=json",
-                            headers: {
-                                "Accept": "*/*",
-                                "x-csrf-token": "fetch",
-                                "Content-Type": "application/json",
-                                "DataServiceVersion": "2.0",
-                                "MaxDataServiceVersion": "2.0",
-                                "X-Requested-With": "XMLHttpRequest",
-                                "sap-contextid-accept": "header"
-                            },
-                            success: (oData, sTextStatus, oRequest) => {
-                                if (oData.d.to_Text.results.find(x => x.LongTextID === "ZO01") !== undefined) {
-                                    this.ZO01 = oData.d.to_Text.results.find(x => x.LongTextID === "ZO01").LongText;
-                                } else {
-                                    this.ZO01 = undefined;
-                                }
-                                if (Order.RequestedDeliveryDate !== undefined || Order.DeliveryBlockReason !== undefined) {
-                                    this._PatchSalesOrder(
-                                        oRequest,
-                                        oData,
-                                        Order,
-                                        resolve,
-                                        reject)
-                                } else {
-                                    resolve(this.oComponent.i18n().getText("msg.success.salvaOrdine.text"));
-                                }
-                            },
-                            error: (oError) => {
-                                reject(this.oComponent.i18n().getText("msg.error.salvaOrdine.text"));
+                    if (this.CBO.length > 0) {
+                        this.VBELN = this.CBO[0].VBELN;
+                        this.AUART = this.CBO[0].AUART;
+                        var Order = {
+                            "SalesOrder": this.VBELN
+                        };
+                        if (this.StatoElaborazione !== this.getView().byId("StatoElaborazione").getValue() && this.getView().byId("StatoElaborazione").getValue() !== "") {
+                            var DeliveryBlockReason = this.getView().byId("StatoElaborazione").getValue();
+                            if (DeliveryBlockReason === "Draft") {
+                                DeliveryBlockReason = "Z1";
+                            } else if (DeliveryBlockReason === "Completato") {
+                                DeliveryBlockReason = "Z2";
                             }
-                        });
-                    });
-                    const oPromiseDM = new Promise((resolve, reject) => {
-                        $.ajax({
-                            cache: false,
-                            crossDomain: true,
-                            type: "GET",
-                            contentType: "application/json; charset=ytf-8",
-                            //dataType: "json",
-                            url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderHeaderPartner(SalesOrder='" + this.VBELN.padStart(10, "0") + "',PartnerFunction='DM')?$format=json",
-                            headers: {
-                                "Accept": "*/*",
-                                "x-csrf-token": "fetch",
-                                "Content-Type": "application/json",
-                                "DataServiceVersion": "2.0",
-                                "MaxDataServiceVersion": "2.0",
-                                "X-Requested-With": "XMLHttpRequest",
-                                "sap-contextid-accept": "header"
-                            },
-                            success: (oData, sTextStatus, oRequest) => {
-                                if (changedestinatario !== undefined) {
-                                    this._PatchDM(
-                                        oRequest,
-                                        oData,
-                                        changedestinatario,
-                                        resolve,
-                                        reject)
-                                } else {
-                                    resolve(this.oComponent.i18n().getText("msg.success.salvaCustomer.text"));
-                                }
-                            },
-                            error: (oError) => {
-                                reject(this.oComponent.i18n().getText("msg.error.salvaCustomer.text"));
-                            }
-                        });
-                    });
-                    const oPromiseBV = new Promise((resolve, reject) => {
-                        if (this.AUART === "ZCD4") {
+                            this.DeliveryBlockReason = DeliveryBlockReason;
+                            Order.DeliveryBlockReason = DeliveryBlockReason;
+                        }
+                        if (this.getView().byId("Note").getValue() !== this.Testata.Note) {
+                            var Note = this.getView().byId("Note").getValue();
+                        }
+                        var dateParts = this.getView().byId("DataConsegna").getValue().split("/");
+                        var datecontrol = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+                        let timezone = datecontrol.getTimezoneOffset() / 60;
+                        datecontrol.setHours(datecontrol.getHours() - timezone);
+                        if (datecontrol.toISOString() !== this.CBO[0].VDATU) {
+                            var date = datecontrol.getTime();
+                            date = "/Date(" + date + ")/";
+                            Order.RequestedDeliveryDate = date;
+                            //cambiare data nel sales order, negli item
+                        }
+                        if (this.keydestinatariochange !== undefined) {
+                            var changedestinatario = this.keydestinatariochange;
+                        }
+                        const oPromiseOrdine = new Promise((resolve, reject) => {
                             $.ajax({
                                 cache: false,
                                 crossDomain: true,
                                 type: "GET",
                                 contentType: "application/json; charset=ytf-8",
                                 //dataType: "json",
-                                url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderHeaderPartner(SalesOrder='" + this.VBELN.padStart(10, "0") + "',PartnerFunction='BV')?$format=json",
+                                url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrder('" + this.VBELN.padStart(10, "0") + "')?$expand=to_Text&$format=json",
                                 headers: {
                                     "Accept": "*/*",
                                     "x-csrf-token": "fetch",
@@ -323,9 +256,47 @@ sap.ui.define([
                                     "sap-contextid-accept": "header"
                                 },
                                 success: (oData, sTextStatus, oRequest) => {
-                                    //aggiungere condizione oDatalenght
+                                    if (oData.d.to_Text.results.find(x => x.LongTextID === "ZO01") !== undefined) {
+                                        this.ZO01 = oData.d.to_Text.results.find(x => x.LongTextID === "ZO01").LongText;
+                                    } else {
+                                        this.ZO01 = undefined;
+                                    }
+                                    if (Order.RequestedDeliveryDate !== undefined || Order.DeliveryBlockReason !== undefined) {
+                                        this._PatchSalesOrder(
+                                            oRequest,
+                                            oData,
+                                            Order,
+                                            resolve,
+                                            reject)
+                                    } else {
+                                        resolve(this.oComponent.i18n().getText("msg.success.salvaOrdine.text"));
+                                    }
+                                },
+                                error: (oError) => {
+                                    reject(this.oComponent.i18n().getText("msg.error.salvaOrdine.text"));
+                                }
+                            });
+                        });
+                        const oPromiseDM = new Promise((resolve, reject) => {
+                            $.ajax({
+                                cache: false,
+                                crossDomain: true,
+                                type: "GET",
+                                contentType: "application/json; charset=ytf-8",
+                                //dataType: "json",
+                                url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderHeaderPartner(SalesOrder='" + this.VBELN.padStart(10, "0") + "',PartnerFunction='DM')?$format=json",
+                                headers: {
+                                    "Accept": "*/*",
+                                    "x-csrf-token": "fetch",
+                                    "Content-Type": "application/json",
+                                    "DataServiceVersion": "2.0",
+                                    "MaxDataServiceVersion": "2.0",
+                                    "X-Requested-With": "XMLHttpRequest",
+                                    "sap-contextid-accept": "header"
+                                },
+                                success: (oData, sTextStatus, oRequest) => {
                                     if (changedestinatario !== undefined) {
-                                        this._PatchBV(
+                                        this._PatchDM(
                                             oRequest,
                                             oData,
                                             changedestinatario,
@@ -339,94 +310,89 @@ sap.ui.define([
                                     reject(this.oComponent.i18n().getText("msg.error.salvaCustomer.text"));
                                 }
                             });
-                        } else {
-                            resolve(this.oComponent.i18n().getText("msg.success.salvaCustomer.text"));
-                        }
-                    });
-                    Promise.all([oPromiseOrdine, oPromiseDM, oPromiseBV]).then(() => {
-                        let oPromiseEliminaItem = Promise.resolve();
-                        this.CBOEliminati.forEach(x => {
-                            oPromiseEliminaItem = oPromiseEliminaItem.then(() => {
-                                return this.EliminaItem(x);
-                            });
                         });
-                        Promise.all([oPromiseEliminaItem]).then(() => {
-                            let oPromisePatchItem = Promise.resolve();
-                            var patchItem = [];
-                            this.ArticoliOrdine.forEach(x => {
-                                var find = this.CBO.find(y => y.POS === x.POS);
-                                if (find !== undefined) {
-                                    if (JSON.stringify(x) !== JSON.stringify(find)) {
-                                        patchItem.push(x);
+                        const oPromiseBV = new Promise((resolve, reject) => {
+                            if (this.AUART === "ZCD4") {
+                                $.ajax({
+                                    cache: false,
+                                    crossDomain: true,
+                                    type: "GET",
+                                    contentType: "application/json; charset=ytf-8",
+                                    //dataType: "json",
+                                    url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderHeaderPartner(SalesOrder='" + this.VBELN.padStart(10, "0") + "',PartnerFunction='BV')?$format=json",
+                                    headers: {
+                                        "Accept": "*/*",
+                                        "x-csrf-token": "fetch",
+                                        "Content-Type": "application/json",
+                                        "DataServiceVersion": "2.0",
+                                        "MaxDataServiceVersion": "2.0",
+                                        "X-Requested-With": "XMLHttpRequest",
+                                        "sap-contextid-accept": "header"
+                                    },
+                                    success: (oData, sTextStatus, oRequest) => {
+                                        //aggiungere condizione oDatalenght
+                                        if (changedestinatario !== undefined) {
+                                            this._PatchBV(
+                                                oRequest,
+                                                oData,
+                                                changedestinatario,
+                                                resolve,
+                                                reject)
+                                        } else {
+                                            resolve(this.oComponent.i18n().getText("msg.success.salvaCustomer.text"));
+                                        }
+                                    },
+                                    error: (oError) => {
+                                        reject(this.oComponent.i18n().getText("msg.error.salvaCustomer.text"));
                                     }
-                                }
-                            });
-                            patchItem.forEach(x => {
-                                oPromisePatchItem = oPromisePatchItem.then(() => {
-                                    return this.ModificaItem(x);
+                                });
+                            } else {
+                                resolve(this.oComponent.i18n().getText("msg.success.salvaCustomer.text"));
+                            }
+                        });
+                        Promise.all([oPromiseOrdine, oPromiseDM, oPromiseBV]).then(() => {
+                            let oPromiseEliminaItem = Promise.resolve();
+                            this.CBOEliminati.forEach(x => {
+                                oPromiseEliminaItem = oPromiseEliminaItem.then(() => {
+                                    return this.EliminaItem(x);
                                 });
                             });
                             Promise.all([oPromiseEliminaItem]).then(() => {
-                                let oPromiseLineItem = Promise.resolve();
-                                if (Order.RequestedDeliveryDate !== undefined) {
-                                    this.ArticoliOrdine.forEach(x => {
-                                        oPromiseLineItem = oPromiseLineItem.then(() => {
-                                            return this.LineItem(x, Order);
-                                        });
-                                    });
-                                }
-                                Promise.all([oPromiseLineItem]).then(() => {
-                                    const oPromiseText = new Promise((resolve, reject) => {
-                                        //if (this.ZO01 !== undefined || this.ZO01 !== "") {
-                                        if (this.ZO01 !== undefined) {
-                                            $.ajax({
-                                                cache: false,
-                                                crossDomain: true,
-                                                type: "GET",
-                                                contentType: "application/json; charset=ytf-8",
-                                                //dataType: "json",
-                                                url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderText(SalesOrder='" + this.VBELN.padStart(10, "0") + "',Language='IT',LongTextID='ZO01')?$format=json",
-                                                headers: {
-                                                    "Accept": "*/*",
-                                                    "x-csrf-token": "fetch",
-                                                    "Content-Type": "application/json",
-                                                    "DataServiceVersion": "2.0",
-                                                    "MaxDataServiceVersion": "2.0",
-                                                    "X-Requested-With": "XMLHttpRequest",
-                                                    "sap-contextid-accept": "header"
-                                                },
-                                                success: (oData, sTextStatus, oRequest) => {
-                                                    //aggiungere condizione oDatalenght
-                                                    if (oData.d !== undefined) {
-                                                        this._PatchText(
-                                                            oRequest,
-                                                            oData,
-                                                            Note,
-                                                            resolve,
-                                                            reject)
-                                                    } else {
-                                                        resolve(this.oComponent.i18n().getText("msg.success.PatchText.text"));
-                                                    }
-                                                },
-                                                error: (oError) => {
-                                                    reject(this.oComponent.i18n().getText("msg.error.PatchText.text"));
-                                                }
-                                            });
-                                        } else {
-                                            resolve(this.oComponent.i18n().getText("msg.success.PatchText.text"));
+                                let oPromisePatchItem = Promise.resolve();
+                                var patchItem = [];
+                                this.ArticoliOrdine.forEach(x => {
+                                    var find = this.CBO.find(y => y.POS === x.POS);
+                                    if (find !== undefined) {
+                                        if (JSON.stringify(x) !== JSON.stringify(find)) {
+                                            patchItem.push(x);
                                         }
+                                    }
+                                });
+                                patchItem.forEach(x => {
+                                    oPromisePatchItem = oPromisePatchItem.then(() => {
+                                        return this.ModificaItem(x);
                                     });
-                                    oPromiseText.then(() => {
-                                        const oPromisePOSTTextOrdine = new Promise((resolve, reject) => {
-                                            // if (((this.ZO01 === undefined || this.ZO01 === "") && Note !== "" && Note !== undefined)) {
-                                            if (((this.ZO01 === undefined) && Note !== "" && Note !== undefined)) {
+                                });
+                                Promise.all([oPromiseEliminaItem]).then(() => {
+                                    let oPromiseLineItem = Promise.resolve();
+                                    if (Order.RequestedDeliveryDate !== undefined) {
+                                        this.ArticoliOrdine.forEach(x => {
+                                            oPromiseLineItem = oPromiseLineItem.then(() => {
+                                                return this.LineItem(x, Order);
+                                            });
+                                        });
+                                    }
+                                    Promise.all([oPromiseLineItem]).then(() => {
+                                        const oPromiseText = new Promise((resolve, reject) => {
+                                            //if (this.ZO01 !== undefined || this.ZO01 !== "") {
+                                            if (this.Testata.Note !== this.ZO01) {
                                                 $.ajax({
                                                     cache: false,
                                                     crossDomain: true,
                                                     type: "GET",
                                                     contentType: "application/json; charset=ytf-8",
-                                                    //                                                    url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrder('" + this.VBELN.padStart(10, "0") + "')/to_Text?$format=json",
-                                                    url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderText?$format=json",
+                                                    //dataType: "json",
+                                                    url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderText(SalesOrder='" + this.VBELN.padStart(10, "0") + "',Language='IT',LongTextID='ZO01')?$format=json",
                                                     headers: {
                                                         "Accept": "*/*",
                                                         "x-csrf-token": "fetch",
@@ -437,95 +403,139 @@ sap.ui.define([
                                                         "sap-contextid-accept": "header"
                                                     },
                                                     success: (oData, sTextStatus, oRequest) => {
-                                                        this._PostSalesOrder(
-                                                            oRequest,
-                                                            oData,
-                                                            Note,
-                                                            resolve,
-                                                            reject);
+                                                        //aggiungere condizione oDatalenght
+                                                        if (oData.d !== undefined) {
+                                                            this._PatchText(
+                                                                oRequest,
+                                                                oData,
+                                                                Note,
+                                                                resolve,
+                                                                reject)
+                                                        } else {
+                                                            resolve(this.oComponent.i18n().getText("msg.success.PatchText.text"));
+                                                        }
                                                     },
                                                     error: (oError) => {
-                                                        reject(this.oComponent.i18n().getText("msg.error.salvaOrdine.text"));
+                                                        reject(this.oComponent.i18n().getText("msg.error.PatchText.text"));
                                                     }
                                                 });
                                             } else {
-                                                resolve(this.oComponent.i18n().getText("msg.success.salvaCustomer.text"));
+                                                resolve(this.oComponent.i18n().getText("msg.success.PatchText.text"));
                                             }
                                         });
-                                        oPromisePOSTTextOrdine.then(() => {
-                                            let oPromisePOSTItem = Promise.resolve();
-                                            if (this.ArticoliAggiunti.length > 0) {
-                                                this.ArticoliAggiunti.forEach(x => {
-                                                    oPromisePOSTItem = oPromisePOSTItem.then(() => {
-                                                        return this.PostItem(x);
-                                                    });
-                                                });
-                                            }
-                                            Promise.all([oPromisePOSTItem]).then(() => {
-                                                const oPromiseSendEmail = new Promise((resolve, reject) => {
-                                                    if (this.DeliveryBlockReason === "Z2") {
-                                                        if (this.ZO01 === undefined) {
-                                                            this.Note = "";
-                                                        } else {
-                                                            this.Note = this.ZO01;
+                                        oPromiseText.then(() => {
+                                            const oPromisePOSTTextOrdine = new Promise((resolve, reject) => {
+                                                // if (((this.ZO01 === undefined || this.ZO01 === "") && Note !== "" && Note !== undefined)) {
+                                                if (((this.ZO01 === undefined) && Note !== "" && Note !== undefined)) {
+                                                    $.ajax({
+                                                        cache: false,
+                                                        crossDomain: true,
+                                                        type: "GET",
+                                                        contentType: "application/json; charset=ytf-8",
+                                                        //                                                    url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrder('" + this.VBELN.padStart(10, "0") + "')/to_Text?$format=json",
+                                                        url: "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrderText?$format=json",
+                                                        headers: {
+                                                            "Accept": "*/*",
+                                                            "x-csrf-token": "fetch",
+                                                            "Content-Type": "application/json",
+                                                            "DataServiceVersion": "2.0",
+                                                            "MaxDataServiceVersion": "2.0",
+                                                            "X-Requested-With": "XMLHttpRequest",
+                                                            "sap-contextid-accept": "header"
+                                                        },
+                                                        success: (oData, sTextStatus, oRequest) => {
+                                                            this._PostSalesOrder(
+                                                                oRequest,
+                                                                oData,
+                                                                Note,
+                                                                resolve,
+                                                                reject);
+                                                        },
+                                                        error: (oError) => {
+                                                            reject(this.oComponent.i18n().getText("msg.error.salvaOrdine.text"));
                                                         }
-                                                        var Email = {
-                                                            "VBELN": this.VBELN,
-                                                            "Note": this.Note
-                                                        };
-                                                        this.getView().getModel().create("/SendEmailSet", Email, {
-                                                            success: () => {
-                                                                resolve();
-                                                            },
-                                                            error: (oError) => {
-                                                                reject(this.getComponent().i18n().getText("msg.error.sendemail.text", Constants.API.REGISTRI_WINE_DATE.SERVICE));
-                                                            }
-                                                        }, [], true);
-                                                    } else {
-                                                        resolve();
-                                                    }
-                                                });
-                                                oPromiseSendEmail.then(() => {
-                                                    MessageToast.show(this.oComponent.i18n().getText("msg.success.salvaOrdine.text"));
-                                                    this.oComponent.setRicerca("X");
-                                                    this.oComponent.resetAllBusy();
-                                                    this.onNavBack();
-                                                },
-                                                    oError => {
-                                                        this.oComponent.resetAllBusy();
-                                                        MessageToast.show(this.oComponent.i18n().getText("msg.error.sendemail.text"));
                                                     });
+                                                } else {
+                                                    resolve(this.oComponent.i18n().getText("msg.success.salvaCustomer.text"));
+                                                }
+                                            });
+                                            oPromisePOSTTextOrdine.then(() => {
+                                                let oPromisePOSTItem = Promise.resolve();
+                                                if (this.ArticoliAggiunti.length > 0) {
+                                                    this.ArticoliAggiunti.forEach(x => {
+                                                        oPromisePOSTItem = oPromisePOSTItem.then(() => {
+                                                            return this.PostItem(x);
+                                                        });
+                                                    });
+                                                }
+                                                Promise.all([oPromisePOSTItem]).then(() => {
+                                                    const oPromiseSendEmail = new Promise((resolve, reject) => {
+                                                        if (this.DeliveryBlockReason === "Z2") {
+                                                            if (this.ZO01 === undefined) {
+                                                                this.Note = "";
+                                                            } else {
+                                                                this.Note = this.ZO01;
+                                                            }
+                                                            var Email = {
+                                                                "VBELN": this.VBELN,
+                                                                "Note": this.Note,
+                                                                "VTWEG": this.VTWEG,
+                                                                "VKORG": this.VKORG
+                                                            };
+                                                            this.getView().getModel().create("/SendEmailSet", Email, {
+                                                                success: () => {
+                                                                    resolve();
+                                                                },
+                                                                error: (oError) => {
+                                                                    reject(this.oComponent.i18n().getText("msg.error.sendemail.text"));
+                                                                }
+                                                            }, [], true);
+                                                        } else {
+                                                            resolve();
+                                                        }
+                                                    });
+                                                    oPromiseSendEmail.then(() => {
+                                                        MessageToast.show(this.oComponent.i18n().getText("msg.success.salvaOrdine.text"));
+                                                        this.oComponent.setRicerca("X");
+                                                        this.oComponent.resetAllBusy();
+                                                        this.onNavBack();
+                                                    },
+                                                        oError => {
+                                                            this.oComponent.resetAllBusy();
+                                                            MessageToast.show(this.oComponent.i18n().getText("msg.error.sendemail.text"));
+                                                        });
+                                                }, oError => {
+                                                    MessageToast.show(this.oComponent.i18n().getText("msg.error.PostItem.text"));
+                                                    this.oComponent.resetAllBusy();
+                                                });
                                             }, oError => {
-                                                MessageToast.show(this.oComponent.i18n().getText("msg.error.PostItem.text"));
+                                                MessageToast.show(this.oComponent.i18n().getText("msg.error.PostText.text"));
                                                 this.oComponent.resetAllBusy();
                                             });
                                         }, oError => {
-                                            MessageToast.show(this.oComponent.i18n().getText("msg.error.PostText.text"));
+                                            MessageToast.show(this.oComponent.i18n().getText("msg.error.PatchText.text"));
                                             this.oComponent.resetAllBusy();
                                         });
-                                    }, oError => {
-                                        MessageToast.show(this.oComponent.i18n().getText("msg.error.PatchText.text"));
-                                        this.oComponent.resetAllBusy();
-                                    });
+                                    },
+                                        oError => {
+                                            MessageToast.show(this.oComponent.i18n().getText("msg.error.scheduleLine.text"));
+                                            this.oComponent.resetAllBusy();
+                                        });
                                 },
                                     oError => {
-                                        MessageToast.show(this.oComponent.i18n().getText("msg.error.scheduleLine.text"));
+                                        MessageToast.show(this.oComponent.i18n().getText("msg.error.modificaItem.text"));
                                         this.oComponent.resetAllBusy();
                                     });
                             },
                                 oError => {
-                                    MessageToast.show(this.oComponent.i18n().getText("msg.error.modificaItem.text"));
+                                    MessageToast.show(this.oComponent.i18n().getText("msg.error.eliminaItem.text"));
                                     this.oComponent.resetAllBusy();
                                 });
-                        },
-                            oError => {
-                                MessageToast.show(this.oComponent.i18n().getText("msg.error.eliminaItem.text"));
-                                this.oComponent.resetAllBusy();
-                            });
-                    }, oError => {
-                        MessageToast.show(this.oComponent.i18n().getText("msg.error.salvaOrdine.text"));
-                        this.oComponent.resetAllBusy();
-                    });
+                        }, oError => {
+                            MessageToast.show(this.oComponent.i18n().getText("msg.error.salvaOrdine.text"));
+                            this.oComponent.resetAllBusy();
+                        });
+                    }
                 }
             }
         });
@@ -543,7 +553,7 @@ sap.ui.define([
             oAppModel.setProperty("/Items", aResults);
             oTable.setModel(oAppModel);
             oTable.bindRows("/Items");
-            oTable.sort(oTable.getColumns()[0]);
+            //oTable.sort(oTable.getColumns()[0]);
             oAppModel.refresh(true);
             this.oComponent.resetAllBusy();
         };
@@ -568,6 +578,42 @@ sap.ui.define([
             oTable.sort(oTable.getColumns()[0]);
             oAppModel.refresh(true);
             this.oComponent.resetAllBusy();
+        };
+        oAppController.prototype.ControlloOrdine = function () {
+            var Errori = "";
+            this.ArticoliOrdine.concat(this.ArticoliAggiunti).forEach(x => {
+                if (x.UDM === "" || x.QUANTITA === "") {
+                    Errori = "Aggiungere l'unità di misura e la quantità per ogni riga";
+                }
+            });
+            if (this.getView().byId("DestinazioneMerci").getValue() === "") {
+                if (Errori !== "") {
+                    Errori = Errori + "\nAggiungere destinatario merci"
+                } else {
+                    Errori = "Aggiungere destinatario merci";
+                }
+            }
+            if (this.getView().byId("DataConsegna").getValue() === "") {
+                if (Errori !== "") {
+                    Errori = Errori + "\nAggiungere data consegna nell'ordine"
+                } else {
+                    Errori = "Aggiungere data consegna nell'ordine";
+                }
+            }
+            if (this.getView().byId("StatoElaborazione").getValue() === "") {
+                if (Errori !== "") {
+                    Errori = Errori + "\nAggiungere stato elaborazione"
+                } else {
+                    Errori = "Aggiungere stato elaborazione";
+                }
+            }
+            if (Errori !== "") {
+                this.Controlli = "X";
+                MessageToast.show(Errori);
+                this.oComponent.resetAllBusy();
+            } else {
+                this.Controlli = "";
+            }
         };
         /**
         * Create selection screen dialog

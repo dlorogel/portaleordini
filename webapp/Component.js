@@ -1,9 +1,10 @@
 sap.ui.define([
     "sap/ui/core/UIComponent",
     "sap/ui/Device",
-    "it/orogel/portaleordini/model/models"
+    "it/orogel/portaleordini/model/models",
+    "sap/ui/core/routing/HashChanger"
 ],
-    function (UIComponent, Device, models) {
+    function (UIComponent, Device, models, HashChanger) {
         "use strict";
 
         const oAppComponent = UIComponent.extend("it.orogel.portaleordini.Component", {
@@ -18,6 +19,7 @@ sap.ui.define([
              */
             init: function () {
                 // call the base component's init function
+                HashChanger.getInstance().replaceHash("");
                 UIComponent.prototype.init.apply(this, arguments);
 
                 // enable routing
@@ -25,7 +27,9 @@ sap.ui.define([
 
                 // set the device model
                 this.setModel(models.createDeviceModel(), "device");
-            }
+            }, setNavigation: function (oNavigation) {
+                this.oNavigation = oNavigation;
+            },
         });
         oAppComponent.prototype.i18n = function () {
             return this.getModel("i18n").getResourceBundle();

@@ -35,12 +35,18 @@ sap.ui.define([
                 });
                 oPromiseCustomer.then((aResults) => {
                     const oAppModel = this.getView().getModel("appModel");
+                    aResults.sort(function (a, b) {
+                        return a.Name1.localeCompare(b.Name1);
+                    });
                     oAppModel.setProperty("/Customer", aResults);
                     if (aResults.length === 0) {
                         MessageToast.show(this.oComponent.i18n().getText("msg.error.noCustomer.text"));
                     } else {
                         this.getOwnerComponent().setAgente(aResults[0].AGENTE);
                         this.getOwnerComponent().setNumeroAgente(aResults[0].AgentNumber);
+                        if (aResults.length === 1) {
+                            oAppModel.setProperty("/CustomerKey", aResults[0].Kunnr);
+                        }
                     }
                 }, oError => {
                     MessageToast.show(this.oComponent.i18n().getText("msg.error.zUserCustomer.text"));

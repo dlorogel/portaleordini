@@ -15,7 +15,7 @@
                     </CheckBox>
                 </t:template>
             </t:Column>
-            <t:Column hAlign="Begin" resizable="true" autoResizable="true" filterProperty="CODARTICOLO" sortProperty="CODARTICOLO">
+            <t:Column id="Column1" hAlign="Begin" resizable="true" autoResizable="true" filterProperty="FILTER" sortProperty="FILTER">
                 <Label text="{i18n>lbl.Articolo}"/>
                 <t:template>
                     <Text text="{CODARTICOLO}  {DESCRARTICOLO}"/>
